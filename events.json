@@ -1,0 +1,32 @@
+[
+  {
+    "starred_at": "2026-08-30T12:34:56Z",
+    "repo": {
+      "name": "sindresorhus/awesome",
+      "html_url": "https://github.com/sindresorhus/awesome",
+      "description": "A curated list of awesome lists",
+      "language": "Markdown",
+      "stargazers_count": 200000
+    }
+  },
+  {
+    "starred_at": "2026-07-15T08:10:00Z",
+    "repo": {
+      "name": "vercel/next.js",
+      "html_url": "https://github.com/vercel/next.js",
+      "description": "The React Framework",
+      "language": "TypeScript",
+      "stargazers_count": 120000
+    }
+  },
+  {
+    "starred_at": "2026-01-02T20:00:00Z",
+    "repo": {
+      "name": "octocat/Hello-World",
+      "html_url": "https://github.com/octocat/Hello-World",
+      "description": "My first repository on GitHub!",
+      "language": "JavaScript",
+      "stargazers_count": 1500
+    }
+  }
+]
