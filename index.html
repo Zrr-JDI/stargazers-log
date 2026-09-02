@@ -1,20 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8">
-    <title>Stargazers log</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stargazers log · Zrr-JDI</title>
+    <meta name="description" content="我已星标的 GitHub 存储库的日志">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23f5c451' d='M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>Stargazers log</h1>
-    <p>A log of the repositories I've starred.</p>
-    <div class="container">
-      <section id="starred-section">
-        <ul id="starred-list">
-          <li class="empty">正在加载收藏的仓库…</li>
-        </ul>
+    <div class="glow glow-a"></div>
+    <div class="glow glow-b"></div>
+
+    <header class="hero">
+      <a class="avatar-link" href="https://github.com/Zrr-JDI" target="_blank" rel="noopener noreferrer">
+        <img id="avatar" class="avatar" src="https://github.com/Zrr-JDI.png?size=160" alt="Zrr-JDI" width="80" height="80">
+      </a>
+      <div class="hero-text">
+        <p class="eyebrow">Stargazers log</p>
+        <h1>我已星标的存储库</h1>
+        <p class="subtitle">
+          <a href="https://github.com/Zrr-JDI?tab=stars" target="_blank" rel="noopener noreferrer">@Zrr-JDI</a> 在 GitHub 上收藏的仓库，按时间倒序排列。
+        </p>
+      </div>
+      <div class="stats" id="stats">
+        <div class="stat"><span class="stat-value" data-stat="count">–</span><span class="stat-label">已星标</span></div>
+        <div class="stat"><span class="stat-value" data-stat="stars">–</span><span class="stat-label">合计 ⭐</span></div>
+        <div class="stat"><span class="stat-value" data-stat="languages">–</span><span class="stat-label">种语言</span></div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="game" aria-label="小游戏">
+        <button id="game-toggle" class="game-toggle" aria-expanded="false" aria-controls="game-panel">玩个小游戏 ▾</button>
+        <div id="game-panel" class="game-panel" hidden>
+          <p class="game-intro">小游乐场 · <b id="game-count">0</b> 款小游戏，选一个开始吧</p>
+          <div id="game-grid" class="game-grid" role="list" aria-label="选择游戏"></div>
+          <div class="game-hud">
+            <span class="game-name" id="game-name"></span>
+            <span>得分 <b id="game-score">0</b></span>
+            <span>最高 <b id="game-best">0</b></span>
+            <span class="game-lives" id="game-lives" aria-label="生命">♥♥♥</span>
+          </div>
+          <div class="game-stage">
+            <canvas id="game-canvas" width="640" height="360" tabindex="0" aria-label="游戏画布"></canvas>
+            <div id="game-overlay" class="game-overlay">
+              <h2 id="game-overlay-title"></h2>
+              <p id="game-overlay-text"></p>
+              <button id="game-start" class="game-button">开始游戏</button>
+            </div>
+          </div>
+        </div>
       </section>
-    </div>
+
+      <div class="toolbar">
+        <label class="search">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input id="search" type="search" placeholder="搜索仓库、描述…" autocomplete="off" aria-label="搜索">
+        </label>
+        <div class="controls">
+          <select id="language" aria-label="按语言筛选">
+            <option value="">全部语言</option>
+          </select>
+          <select id="sort" aria-label="排序">
+            <option value="starred">最近收藏</option>
+            <option value="stars">最多 ⭐</option>
+            <option value="name">名称 A–Z</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="status" id="status" role="status"></p>
+
+      <section id="starred-section" aria-live="polite">
+        <ol id="starred-list" class="timeline">
+          <li class="empty">正在加载收藏的仓库…</li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span id="source"></span>
+      <span>·</span>
+      <a href="https://github.com/Zrr-JDI/stargazers-log" target="_blank" rel="noopener noreferrer">源码</a>
+    </footer>
+
     <script src="script.js" defer></script>
+    <script src="games.js" defer></script>
+    <script src="game.js" defer></script>
   </body>
 </html>

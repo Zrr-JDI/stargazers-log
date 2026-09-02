@@ -1,32 +1,86 @@
 [
   {
-    "starred_at": "2026-08-30T12:34:56Z",
     "repo": {
-      "name": "sindresorhus/awesome",
-      "html_url": "https://github.com/sindresorhus/awesome",
-      "description": "A curated list of awesome lists",
-      "language": "Markdown",
-      "stargazers_count": 200000
-    }
+      "archived": false,
+      "description": "屏幕实时翻译",
+      "fork": false,
+      "full_name": "YCYAX/On-screen-real-time-translation",
+      "html_url": "https://github.com/YCYAX/On-screen-real-time-translation",
+      "language": "Python",
+      "name": "YCYAX/On-screen-real-time-translation",
+      "stargazers_count": 11,
+      "topics": []
+    },
+    "starred_at": "2024-11-01T17:21:12Z"
   },
   {
-    "starred_at": "2026-07-15T08:10:00Z",
     "repo": {
-      "name": "vercel/next.js",
-      "html_url": "https://github.com/vercel/next.js",
-      "description": "The React Framework",
-      "language": "TypeScript",
-      "stargazers_count": 120000
-    }
+      "archived": false,
+      "description": "百度云百度网盘超级会员账号SVIP账号 分享, 另分享多款百度网盘不限速下载工具以及各大平台会员账号（迅雷 优酷 爱奇艺 腾讯视频等）.",
+      "fork": false,
+      "full_name": "lpg-it/BaiduYunVIP",
+      "html_url": "https://github.com/lpg-it/BaiduYunVIP",
+      "language": null,
+      "name": "lpg-it/BaiduYunVIP",
+      "stargazers_count": 4216,
+      "topics": []
+    },
+    "starred_at": "2024-11-01T17:16:00Z"
   },
   {
-    "starred_at": "2026-01-02T20:00:00Z",
     "repo": {
-      "name": "octocat/Hello-World",
-      "html_url": "https://github.com/octocat/Hello-World",
-      "description": "My first repository on GitHub!",
+      "archived": false,
+      "description": "全自动填写问卷星的问卷，支持自定义填空答案，平均两三秒填写一份问卷，可多开几个标签同时刷",
+      "fork": false,
+      "full_name": "ZainCheung/wenjuanxin",
+      "html_url": "https://github.com/ZainCheung/wenjuanxin",
       "language": "JavaScript",
-      "stargazers_count": 1500
-    }
+      "name": "ZainCheung/wenjuanxin",
+      "stargazers_count": 312,
+      "topics": []
+    },
+    "starred_at": "2024-10-28T01:14:12Z"
+  },
+  {
+    "repo": {
+      "archived": false,
+      "description": "问卷星抢票脚本",
+      "fork": false,
+      "full_name": "QiuDi233/sojump-auto-fill",
+      "html_url": "https://github.com/QiuDi233/sojump-auto-fill",
+      "language": "Python",
+      "name": "QiuDi233/sojump-auto-fill",
+      "stargazers_count": 12,
+      "topics": []
+    },
+    "starred_at": "2024-10-28T01:12:57Z"
+  },
+  {
+    "repo": {
+      "archived": false,
+      "description": "Font files available from Google Fonts, and a public issue tracker for all things Google Fonts",
+      "fork": false,
+      "full_name": "google/fonts",
+      "html_url": "https://github.com/google/fonts",
+      "language": "HTML",
+      "name": "google/fonts",
+      "stargazers_count": 20435,
+      "topics": []
+    },
+    "starred_at": "2024-10-14T10:28:51Z"
+  },
+  {
+    "repo": {
+      "archived": false,
+      "description": "xmind pro 8 破解补丁",
+      "fork": false,
+      "full_name": "winturn/xmind-pro-8-crack-patch",
+      "html_url": "https://github.com/winturn/xmind-pro-8-crack-patch",
+      "language": "Batchfile",
+      "name": "winturn/xmind-pro-8-crack-patch",
+      "stargazers_count": 67,
+      "topics": []
+    },
+    "starred_at": "2024-09-27T07:40:20Z"
   }
 ]
