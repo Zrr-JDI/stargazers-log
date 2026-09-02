@@ -37,15 +37,18 @@
       <section class="game" aria-label="小游戏">
         <button id="game-toggle" class="game-toggle" aria-expanded="false" aria-controls="game-panel">玩个小游戏 ▾</button>
         <div id="game-panel" class="game-panel" hidden>
+          <p class="game-intro">小游乐场 · <b id="game-count">0</b> 款小游戏，选一个开始吧</p>
+          <div id="game-grid" class="game-grid" role="list" aria-label="选择游戏"></div>
           <div class="game-hud">
+            <span class="game-name" id="game-name"></span>
             <span>得分 <b id="game-score">0</b></span>
             <span>最高 <b id="game-best">0</b></span>
             <span class="game-lives" id="game-lives" aria-label="生命">♥♥♥</span>
           </div>
           <div class="game-stage">
-            <canvas id="game-canvas" width="640" height="360" tabindex="0" aria-label="接星星游戏画布"></canvas>
+            <canvas id="game-canvas" width="640" height="360" tabindex="0" aria-label="游戏画布"></canvas>
             <div id="game-overlay" class="game-overlay">
-              <h2 id="game-overlay-title">接星星</h2>
+              <h2 id="game-overlay-title"></h2>
               <p id="game-overlay-text"></p>
               <button id="game-start" class="game-button">开始游戏</button>
             </div>
@@ -86,6 +89,7 @@
     </footer>
 
     <script src="script.js" defer></script>
+    <script src="games.js" defer></script>
     <script src="game.js" defer></script>
   </body>
 </html>

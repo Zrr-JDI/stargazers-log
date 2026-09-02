@@ -1,162 +1,46 @@
 (() => {
   const canvas = document.getElementById('game-canvas');
-  if (!canvas) return;
+  if (!canvas || !window.ARCADE_GAMES) return;
   const ctx = canvas.getContext('2d');
   const scoreEl = document.getElementById('game-score');
   const bestEl = document.getElementById('game-best');
   const livesEl = document.getElementById('game-lives');
+  const nameEl = document.getElementById('game-name');
   const overlay = document.getElementById('game-overlay');
   const overlayTitle = document.getElementById('game-overlay-title');
   const overlayText = document.getElementById('game-overlay-text');
   const startBtn = document.getElementById('game-start');
   const toggleBtn = document.getElementById('game-toggle');
   const panel = document.getElementById('game-panel');
+  const grid = document.getElementById('game-grid');
+  const countEl = document.getElementById('game-count');
 
-  const BEST_KEY = 'stargazers-log.best';
+  const GAMES = window.ARCADE_GAMES;
   const W = 640, H = 360;
-  const MAX_LIVES = 3;
+  const BEST_PREFIX = 'stargazers-log.best.';
+  const LAST_KEY = 'stargazers-log.last-game';
 
-  const state = {
-    running: false,
-    score: 0,
-    best: Number(localStorage.getItem(BEST_KEY) || 0),
-    lives: MAX_LIVES,
-    player: { x: W / 2, w: 84, h: 14, target: W / 2 },
-    stars: [],
-    particles: [],
-    spawnTimer: 0,
-    elapsed: 0,
-    keys: { left: false, right: false },
-    last: 0,
-    raf: 0,
-    dpr: 1,
+  const state = { game: null, running: false, score: 0, best: 0, lives: 0, maxLives: 0, last: 0, raf: 0, dpr: 1, elapsed: 0, keys: new Set(), swipe: null };
+
+  const KEY_MAP = {
+    ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown',
+    a: 'ArrowLeft', d: 'ArrowRight', w: 'ArrowUp', s: 'ArrowDown',
+    A: 'ArrowLeft', D: 'ArrowRight', W: 'ArrowUp', S: 'ArrowDown',
+    ' ': 'Space', Enter: 'Enter', Escape: 'Escape', r: 'r', R: 'r',
   };
 
-  function resize() {
-    const rect = canvas.getBoundingClientRect();
-    state.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = W * state.dpr;
-    canvas.height = H * state.dpr;
-    canvas.style.height = `${rect.width * (H / W)}px`;
-    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  /* ---------- helpers exposed to games ---------- */
+  function roundRect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
   }
-
-  function updateHud() {
-    scoreEl.textContent = state.score;
-    bestEl.textContent = state.best;
-    livesEl.textContent = '♥'.repeat(state.lives) + '♡'.repeat(MAX_LIVES - state.lives);
-  }
-
-  function showOverlay(title, text, button) {
-    overlayTitle.textContent = title;
-    overlayText.textContent = text;
-    startBtn.textContent = button;
-    overlay.hidden = false;
-  }
-
-  function reset() {
-    state.score = 0;
-    state.lives = MAX_LIVES;
-    state.stars = [];
-    state.particles = [];
-    state.spawnTimer = 0;
-    state.elapsed = 0;
-    state.player.x = state.player.target = W / 2;
-    updateHud();
-  }
-
-  function start() {
-    reset();
-    overlay.hidden = true;
-    state.running = true;
-    state.last = performance.now();
-    cancelAnimationFrame(state.raf);
-    state.raf = requestAnimationFrame(loop);
-    canvas.focus();
-  }
-
-  function gameOver() {
-    state.running = false;
-    if (state.score > state.best) {
-      state.best = state.score;
-      localStorage.setItem(BEST_KEY, String(state.best));
-    }
-    updateHud();
-    showOverlay('游戏结束', `本局得分 ${state.score} · 最高 ${state.best}`, '再来一局');
-    draw();
-  }
-
-  function spawnStar() {
-    const golden = Math.random() < 0.12;
-    state.stars.push({
-      x: 20 + Math.random() * (W - 40),
-      y: -16,
-      r: golden ? 11 : 8,
-      vy: 90 + Math.random() * 60 + state.elapsed * 6,
-      vx: (Math.random() - 0.5) * 40,
-      spin: Math.random() * Math.PI,
-      golden,
-    });
-  }
-
-  function burst(x, y, color, n = 12) {
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      const s = 60 + Math.random() * 80;
-      state.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5, color });
-    }
-  }
-
-  function update(dt) {
-    state.elapsed += dt;
-    const p = state.player;
-
-    const speed = 520;
-    if (state.keys.left) p.target -= speed * dt;
-    if (state.keys.right) p.target += speed * dt;
-    p.target = Math.max(p.w / 2, Math.min(W - p.w / 2, p.target));
-    p.x += (p.target - p.x) * Math.min(1, dt * 18);
-
-    const interval = Math.max(0.35, 1.1 - state.elapsed * 0.02);
-    state.spawnTimer += dt;
-    while (state.spawnTimer > interval) {
-      state.spawnTimer -= interval;
-      spawnStar();
-    }
-
-    const py = H - 36;
-    for (let i = state.stars.length - 1; i >= 0; i--) {
-      const s = state.stars[i];
-      s.y += s.vy * dt;
-      s.x += s.vx * dt;
-      s.spin += dt * 2;
-      if (s.x < s.r || s.x > W - s.r) s.vx *= -1;
-
-      const caught = s.y + s.r >= py && s.y - s.r <= py + p.h && Math.abs(s.x - p.x) <= p.w / 2 + s.r * 0.6;
-      if (caught) {
-        state.score += s.golden ? 5 : 1;
-        burst(s.x, py, s.golden ? '#ffd166' : '#f5c451', s.golden ? 20 : 10);
-        state.stars.splice(i, 1);
-        updateHud();
-      } else if (s.y - s.r > H) {
-        state.stars.splice(i, 1);
-        state.lives -= 1;
-        burst(s.x, H - 4, '#fb7185', 8);
-        updateHud();
-        if (state.lives <= 0) return gameOver();
-      }
-    }
-
-    for (let i = state.particles.length - 1; i >= 0; i--) {
-      const q = state.particles[i];
-      q.life -= dt;
-      q.x += q.vx * dt;
-      q.y += q.vy * dt;
-      q.vy += 200 * dt;
-      if (q.life <= 0) state.particles.splice(i, 1);
-    }
-  }
-
+  function fillRound(x, y, w, h, r, color) { roundRect(x, y, w, h, r); ctx.fillStyle = color; ctx.fill(); }
   function drawStar(x, y, r, rot, color) {
     ctx.save();
     ctx.translate(x, y);
@@ -174,112 +58,289 @@
     ctx.fill();
     ctx.restore();
   }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-
+  function text(str, x, y, { size = 14, color = '#eceef3', align = 'center', weight = 500, font = 'Inter, system-ui, sans-serif', baseline = 'middle' } = {}) {
+    ctx.font = `${weight} ${size}px ${font}`;
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
+    ctx.fillText(str, x, y);
+  }
+  function background(top = '#0e1120', bottom = '#0b0d12') {
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0e1120');
-    g.addColorStop(1, '#0b0d12');
+    g.addColorStop(0, top);
+    g.addColorStop(1, bottom);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
-
+  }
+  function starfield(t) {
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     for (let i = 0; i < 40; i++) {
       const x = (i * 97 + 31) % W;
-      const y = (i * 53 + (state.elapsed * 12 * (1 + (i % 3)))) % H;
+      const y = (i * 53 + t * 12 * (1 + (i % 3))) % H;
       ctx.fillRect(x, y, 1.5, 1.5);
     }
+  }
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const randInt = (a, b) => Math.floor(rand(a, b + 1));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
 
-    for (const s of state.stars) drawStar(s.x, s.y, s.r, s.spin, s.golden ? '#ffd166' : '#f5c451');
-
-    for (const q of state.particles) {
+  const particles = [];
+  function burst(x, y, color, n = 12) {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const s = 60 + Math.random() * 80;
+      particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5, color });
+    }
+  }
+  function updateParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const q = particles[i];
+      q.life -= dt;
+      q.x += q.vx * dt;
+      q.y += q.vy * dt;
+      q.vy += 200 * dt;
+      if (q.life <= 0) particles.splice(i, 1);
+    }
+  }
+  function drawParticles() {
+    for (const q of particles) {
       ctx.globalAlpha = Math.max(0, q.life / 0.5);
       ctx.fillStyle = q.color;
       ctx.fillRect(q.x - 1.5, q.y - 1.5, 3, 3);
     }
     ctx.globalAlpha = 1;
-
-    const p = state.player;
-    const py = H - 36;
-    ctx.save();
-    ctx.shadowColor = '#7aa2ff';
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = '#7aa2ff';
-    roundRect(p.x - p.w / 2, py, p.w, p.h, 7);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    roundRect(p.x - p.w / 2 + 8, py + 3, p.w - 16, 3, 2);
-    ctx.fill();
   }
 
-  function roundRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
+  const api = {
+    W, H, ctx, keys: state.keys,
+    colors: { gold: '#f5c451', gold2: '#ffd166', blue: '#7aa2ff', red: '#fb7185', green: '#4ade80', purple: '#c084fc', text: '#eceef3', muted: '#8a90a2' },
+    roundRect, fillRound, drawStar, text, background, starfield, rand, randInt, clamp, shuffle, burst,
+    addScore(n = 1) { state.score += n; updateHud(); },
+    setScore(n) { state.score = n; updateHud(); },
+    get score() { return state.score; },
+    get lives() { return state.lives; },
+    loseLife(n = 1) {
+      state.lives -= n;
+      updateHud();
+      if (state.lives <= 0) { gameOver(); return true; }
+      return false;
+    },
+    end(message) { gameOver(message); },
+    get running() { return state.running; },
+    get elapsed() { return state.elapsed; },
+  };
+
+  /* ---------- engine ---------- */
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = W * state.dpr;
+    canvas.height = H * state.dpr;
+    canvas.style.height = `${rect.width * (H / W)}px`;
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  }
+
+  function updateHud() {
+    scoreEl.textContent = state.score;
+    bestEl.textContent = state.best;
+    livesEl.hidden = state.maxLives === 0;
+    livesEl.textContent = '♥'.repeat(Math.max(0, state.lives)) + '♡'.repeat(Math.max(0, state.maxLives - state.lives));
+  }
+
+  function showOverlay(title, txt, button) {
+    overlayTitle.textContent = title;
+    overlayText.textContent = txt;
+    startBtn.textContent = button;
+    overlay.hidden = false;
+  }
+
+  function loadBest(id) { return Number(localStorage.getItem(BEST_PREFIX + id) || 0); }
+
+  function select(id, { autofocus = true } = {}) {
+    const game = GAMES.find((g) => g.id === id) || GAMES[0];
+    if (state.running) stopLoop();
+    state.game = game;
+    state.running = false;
+    state.score = 0;
+    state.best = loadBest(game.id);
+    state.maxLives = game.lives || 0;
+    state.lives = state.maxLives;
+    particles.length = 0;
+    state.keys.clear();
+    localStorage.setItem(LAST_KEY, game.id);
+    nameEl.textContent = `${game.icon} ${game.name}`;
+    canvas.setAttribute('aria-label', `${game.name} 游戏画布`);
+    for (const b of grid.children) b.classList.toggle('active', b.dataset.id === game.id);
+    updateHud();
+    showOverlay(`${game.icon} ${game.name}`, game.desc, '开始游戏');
+    game.start(api);
+    drawFrame();
+    if (autofocus) canvas.focus();
+  }
+
+  function start() {
+    const game = state.game;
+    state.score = 0;
+    state.lives = state.maxLives;
+    state.elapsed = 0;
+    particles.length = 0;
+    state.keys.clear();
+    updateHud();
+    game.start(api);
+    overlay.hidden = true;
+    state.running = true;
+    state.last = performance.now();
+    cancelAnimationFrame(state.raf);
+    state.raf = requestAnimationFrame(loop);
+    canvas.focus();
+  }
+
+  function stopLoop() {
+    state.running = false;
+    cancelAnimationFrame(state.raf);
+  }
+
+  function gameOver(message) {
+    if (!state.running) return;
+    stopLoop();
+    if (state.score > state.best) {
+      state.best = state.score;
+      localStorage.setItem(BEST_PREFIX + state.game.id, String(state.best));
+    }
+    state.keys.clear();
+    updateHud();
+    showOverlay(message || '游戏结束', `本局得分 ${state.score} · 最高 ${state.best}`, '再来一局');
+    drawFrame();
+  }
+
+  function drawFrame() {
+    ctx.clearRect(0, 0, W, H);
+    state.game.draw(ctx, api);
+    drawParticles();
   }
 
   function loop(now) {
     if (!state.running) return;
     const dt = Math.min(0.05, (now - state.last) / 1000);
     state.last = now;
-    update(dt);
+    state.elapsed += dt;
+    state.game.update(dt, api);
+    updateParticles(dt);
     if (state.running) {
-      draw();
+      drawFrame();
       state.raf = requestAnimationFrame(loop);
     }
   }
 
-  function pointerX(ev) {
-    const rect = canvas.getBoundingClientRect();
-    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    return ((clientX - rect.left) / rect.width) * W;
+  /* ---------- input ---------- */
+  function forwardKey(key, down) {
+    if (down) state.keys.add(key); else state.keys.delete(key);
+    if (state.running && state.game.key) state.game.key(key, down, api);
   }
 
   canvas.addEventListener('keydown', (ev) => {
-    if (ev.key === 'ArrowLeft' || ev.key === 'a' || ev.key === 'A') { state.keys.left = true; ev.preventDefault(); }
-    if (ev.key === 'ArrowRight' || ev.key === 'd' || ev.key === 'D') { state.keys.right = true; ev.preventDefault(); }
-    if ((ev.key === ' ' || ev.key === 'Enter') && !state.running) { start(); ev.preventDefault(); }
+    const key = KEY_MAP[ev.key];
+    if (!key) return;
+    ev.preventDefault();
+    if (!state.running) {
+      if (key === 'Space' || key === 'Enter') start();
+      return;
+    }
+    if (ev.repeat) return;
+    forwardKey(key, true);
   });
   canvas.addEventListener('keyup', (ev) => {
-    if (ev.key === 'ArrowLeft' || ev.key === 'a' || ev.key === 'A') state.keys.left = false;
-    if (ev.key === 'ArrowRight' || ev.key === 'd' || ev.key === 'D') state.keys.right = false;
+    const key = KEY_MAP[ev.key];
+    if (key) forwardKey(key, false);
   });
-  canvas.addEventListener('blur', () => { state.keys.left = state.keys.right = false; });
+  canvas.addEventListener('blur', () => {
+    for (const k of [...state.keys]) forwardKey(k, false);
+  });
 
-  canvas.addEventListener('mousemove', (ev) => { if (state.running) state.player.target = pointerX(ev); });
-  canvas.addEventListener('touchmove', (ev) => {
-    if (state.running) { state.player.target = pointerX(ev); ev.preventDefault(); }
-  }, { passive: false });
+  function point(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const src = ev.touches && ev.touches.length ? ev.touches[0] : ev.changedTouches && ev.changedTouches.length ? ev.changedTouches[0] : ev;
+    return { x: ((src.clientX - rect.left) / rect.width) * W, y: ((src.clientY - rect.top) / rect.height) * H };
+  }
+  function pointer(type, ev, button = 0) {
+    if (!state.running || !state.game.pointer) return;
+    const p = point(ev);
+    state.game.pointer(type, p.x, p.y, button, api);
+  }
+
+  canvas.addEventListener('mousedown', (ev) => { pointer('down', ev, ev.button); });
+  canvas.addEventListener('mousemove', (ev) => { pointer('move', ev); });
+  canvas.addEventListener('mouseup', (ev) => { pointer('up', ev, ev.button); });
+  canvas.addEventListener('contextmenu', (ev) => ev.preventDefault());
+
   canvas.addEventListener('touchstart', (ev) => {
-    if (state.running) { state.player.target = pointerX(ev); ev.preventDefault(); }
+    if (!state.running) return;
+    ev.preventDefault();
+    const p = point(ev);
+    state.swipe = { x: p.x, y: p.y, t: performance.now() };
+    pointer('down', ev);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (ev) => {
+    if (!state.running) return;
+    ev.preventDefault();
+    pointer('move', ev);
+  }, { passive: false });
+  canvas.addEventListener('touchend', (ev) => {
+    if (!state.running) return;
+    ev.preventDefault();
+    const p = point(ev);
+    const s = state.swipe;
+    state.swipe = null;
+    if (s) {
+      const dx = p.x - s.x, dy = p.y - s.y;
+      if (Math.hypot(dx, dy) > 28) {
+        const key = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'ArrowRight' : 'ArrowLeft') : (dy > 0 ? 'ArrowDown' : 'ArrowUp');
+        forwardKey(key, true);
+        setTimeout(() => forwardKey(key, false), 80);
+      }
+    }
+    pointer('up', ev);
   }, { passive: false });
 
   startBtn.addEventListener('click', start);
+
+  /* ---------- picker ---------- */
+  for (const g of GAMES) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'game-card';
+    b.dataset.id = g.id;
+    b.innerHTML = `<span class="game-card-icon">${g.icon}</span><span class="game-card-name">${g.name}</span>`;
+    b.title = g.desc;
+    b.addEventListener('click', () => select(g.id));
+    grid.appendChild(b);
+  }
+  countEl.textContent = GAMES.length;
 
   toggleBtn.addEventListener('click', () => {
     const open = panel.hidden;
     panel.hidden = !open;
     toggleBtn.setAttribute('aria-expanded', String(open));
-    toggleBtn.textContent = open ? '收起小游戏 ▴' : '玩个小游戏 ▾';
+    toggleBtn.textContent = open ? '收起小游戏 ▴' : `玩个小游戏（${GAMES.length} 款）▾`;
     if (open) {
       resize();
-      draw();
+      drawFrame();
       canvas.focus();
     } else if (state.running) {
       gameOver();
     }
   });
+  toggleBtn.textContent = `玩个小游戏（${GAMES.length} 款）▾`;
 
-  window.addEventListener('resize', () => { if (!panel.hidden) { resize(); draw(); } });
+  window.addEventListener('resize', () => { if (!panel.hidden) { resize(); drawFrame(); } });
 
   resize();
-  updateHud();
-  showOverlay('接星星', '← → 或 A/D 移动，鼠标/触摸也可以。接住 ⭐ 得分，金色 ⭐ 5 分，漏掉 3 颗结束。', '开始游戏');
-  draw();
+  select(localStorage.getItem(LAST_KEY) || GAMES[0].id, { autofocus: false });
 })();
