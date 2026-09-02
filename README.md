@@ -6,6 +6,7 @@
 
 - `index.html` / `style.css` / `script.js` — a static page, deployed to GitHub Pages by `.github/workflows/deploy.yml`.
 - On load the page fetches the starred list directly from the GitHub API (`/users/Zrr-JDI/starred`, with `starred_at` timestamps). If the API is unavailable or rate-limited, it falls back to `events.json`.
+- `game.js` — a small "catch the falling stars" mini-game (arrow keys / A-D / mouse / touch), collapsed behind the "玩个小游戏" button; best score is kept in `localStorage`.
 - `.github/workflows/update-stars.yml` refreshes `events.json` every day (and on demand via *Run workflow*) so the fallback stays fresh.
 
 Features: month-grouped timeline, search, language filter, sort by recency / stars / name, topic chips, and summary stats.
